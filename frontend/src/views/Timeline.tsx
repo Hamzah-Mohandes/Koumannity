@@ -15,8 +15,10 @@ export default function Timeline({ user }: TimelineProps) {
     const [posts, setPosts] = useState<PostResponse[]>([]);
     const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
     const [textContent, setTextContent] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
-    const [showImageInput, setShowImageInput] = useState(false);
+
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [showFileInput, setShowFileInput] = useState(false);
+
     const [activeFilter, setActiveFilter] = useState<TeamType | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -41,20 +43,26 @@ export default function Timeline({ user }: TimelineProps) {
 
     const handleCreatePost = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!textContent.trim() && !imageUrl.trim()) return;
+        if (!textContent.trim() && !selectedFile) return;
         if (textContent.length > 100) return;
 
+        const formData = new FormData();
+        formData.append('username', user.username);
+        formData.append('avatar', user.avatar);
+        formData.append('team', user.team);
+
+        if (textContent.trim()) {
+            formData.append('text_content', textContent.trim());
+        }
+        if (selectedFile) {
+            formData.append('file', selectedFile);
+        }
+
         try {
-            await apiService.createPost({
-                username: user.username,
-                avatar: user.avatar,
-                team: user.team,
-                text_content: textContent.trim() || null,
-                image_url: imageUrl.trim() || null,
-            });
+            await apiService.createPost(formData);
             setTextContent('');
-            setImageUrl('');
-            setShowImageInput(false);
+            setSelectedFile(null);
+            setShowFileInput(false);
             fetchData();
         } catch (error) {
             console.error('Failed to create post:', error);
@@ -63,18 +71,16 @@ export default function Timeline({ user }: TimelineProps) {
 
     const handleReaction = async (postId: number, type: 'toxic' | 'cool') => {
         try {
-            await apiService.reactToPost(postId, type);
+            await apiService.reactToPost(postId, user.username, type);
             fetchData();
         } catch (error) {
             console.error('Failed to react:', error);
         }
     };
 
-    // اخطار حماسی جدید برای فرآیند حذف ۲ ساعته با ۱۰۰۰ کلیک
     const handleDeletePost = async (postId: number) => {
         if (!window.confirm('If this post gets 1000 clicks, it will be deleted within the next 2 hours in the war between the 3 factions! | اگر این پست ۱۰۰۰ بار کلیک بخورد، تا ۲ ساعت آینده در جنگ بین ۳ گروه پاک خواهد شد!')) return;
         try {
-            // شبیه‌سازی منطق در فرانت‌اند
             alert('Termination protocol activated! 1000 clicks required within 2h. | پروتکل حذف فعال شد! نیاز به ۱۰۰۰ کلیک در ۲ ساعت آینده.');
         } catch (error) {
             console.error('Failed to delete post:', error);
@@ -105,7 +111,7 @@ export default function Timeline({ user }: TimelineProps) {
     if (loading) {
         return (
             <div className="min-h-screen bg-[#0d0e12] flex items-center justify-center text-amber-500 font-bold">
-                Loading Koumanto Matrix... | در حال بارگذاری ماتریکس کوماتو...
+                Loading Koumannity Matrix... | در حال بارگذاری ماتریکس کوماتو...
             </div>
         );
     }
@@ -113,11 +119,11 @@ export default function Timeline({ user }: TimelineProps) {
     return (
         <div className="min-h-screen bg-[#0d0e12] text-white p-4 md:p-8 font-sans antialiased select-none">
 
-            {/* هدر بالایی برنامه */}
+            {/* هدر بالایی برنامه با برند جدید Koumannity */}
             <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 border-b border-neutral-900 pb-5 gap-4">
                 <div className="flex items-center space-x-2 shrink-0">
                     <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-amber-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">k/mi</span>
-                    <span className="text-lg font-bold text-gray-200">Koumanto</span>
+                    <span className="text-lg font-bold text-gray-200">Koumannity</span>
                 </div>
 
                 {/* فیلترها */}
@@ -172,7 +178,7 @@ export default function Timeline({ user }: TimelineProps) {
                     </div>
                 </div>
 
-                {/* ۲. باکس ارسال پست با تغییر انقضا به ۱۰ ساعت */}
+                {/* ۲. باکس ارسال پست */}
                 <div className="bg-[#15171e] border border-neutral-800/80 p-5 rounded-2xl shadow-lg space-y-3">
                     <h3 className="text-sm font-bold text-gray-300">Share a Moment | به اشتراک گذاشتن لحظه <span className="text-xs text-neutral-500 font-normal">(Expires 10h)</span></h3>
                     <form onSubmit={handleCreatePost} className="space-y-3">
@@ -184,12 +190,31 @@ export default function Timeline({ user }: TimelineProps) {
                                 placeholder="Tell the Commandoes something crazy... | چیزی دیوانه‌وار به کماندوها بگو..."
                                 className="w-full bg-transparent text-sm placeholder-neutral-600 focus:outline-none resize-none h-8 pt-1"
                             />
-                            <button type="button" onClick={() => setShowImageInput(!showImageInput)} className="p-2 rounded-lg text-gray-500 hover:text-white transition mr-2 cursor-pointer">🖼️</button>
+                            <button
+                                type="button"
+                                onClick={() => setShowFileInput(!showFileInput)}
+                                className="p-2 rounded-lg text-gray-500 hover:text-white transition mr-2 cursor-pointer"
+                            >
+                                🖼️
+                            </button>
                             <button type="submit" className="bg-[#ccced6] hover:bg-white text-black font-extrabold px-6 py-2 rounded-xl text-[11px] transition shrink-0 cursor-pointer">SHARE | ارسال</button>
                         </div>
 
-                        {showImageInput && (
-                            <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Paste Image URL here..." className="w-full bg-[#0d0e12] border border-neutral-800 rounded-xl p-2.5 text-xs text-neutral-300 focus:outline-none" />
+                        {showFileInput && (
+                            <div className="bg-[#0d0e12] border border-neutral-800 rounded-xl p-3 flex flex-col space-y-2">
+                                <label className="text-[11px] text-gray-400 font-bold block">SELECT IMAGE FROM DEVICE | انتخاب عکس از دستگاه</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            setSelectedFile(e.target.files[0]);
+                                        }
+                                    }}
+                                    className="text-xs text-neutral-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-neutral-800 file:text-white hover:file:bg-neutral-700 cursor-pointer"
+                                />
+                                {selectedFile && <p className="text-[10px] text-emerald-400 font-mono">Selected File: {selectedFile.name}</p>}
+                            </div>
                         )}
                     </form>
                 </div>
@@ -211,7 +236,6 @@ export default function Timeline({ user }: TimelineProps) {
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center text-xs">
                                                 <span className="text-lg">{fac.icon}</span>
-                                                {/* لیبل زمانی تغییر یافته به 10h */}
                                                 <span className="text-neutral-500 font-mono text-[10px]">🕒 10h</span>
                                             </div>
                                             <div>
@@ -228,17 +252,16 @@ export default function Timeline({ user }: TimelineProps) {
 
                                         <div className="space-y-2.5 pt-3 border-t border-neutral-800/60 ">
                                             <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                                                <button onClick={() => handleReaction(post.id, 'toxic')} className="flex flex-col items-center justify-center bg-[#0d0e12] p-2 rounded-xl border border-neutral-800 text-amber-500/90 cursor-pointer">
+                                                <button onClick={() => handleReaction(post.id, 'toxic')} className="flex flex-col items-center justify-center bg-[#0d0e12] p-2 rounded-xl border border-neutral-800 text-amber-500/90 cursor-pointer hover:border-amber-500/40 transition">
                                                     <span className="font-bold">☣️ Semic | سَمی</span>
-                                                    <span className="text-neutral-500 mt-0.5">({post.toxic_count})</span>
+                                                    <span className="text-neutral-500 mt-0.5">({post.toxic_count || 0})</span>
                                                 </button>
-                                                <button onClick={() => handleReaction(post.id, 'cool')} className="flex flex-col items-center justify-center bg-[#0d0e12] p-2 rounded-xl border border-neutral-800 text-blue-400 cursor-pointer">
+                                                <button onClick={() => handleReaction(post.id, 'cool')} className="flex flex-col items-center justify-center bg-[#0d0e12] p-2 rounded-xl border border-neutral-800 text-blue-400 cursor-pointer hover:border-blue-400/40 transition">
                                                     <span className="font-bold">🔥 Khafan | خَفَن</span>
-                                                    <span className="text-neutral-500 mt-0.5">({post.cool_count})</span>
+                                                    <span className="text-neutral-500 mt-0.5">({post.cool_count || 0})</span>
                                                 </button>
                                             </div>
 
-                                            {/* دکمه حذف با استراتژی و قوانین ۲ ساعته جدید شما */}
                                             <button onClick={() => handleDeletePost(post.id)} className="w-full flex flex-col items-center justify-center bg-neutral-950 px-3 py-2 rounded-xl text-[9px] font-bold text-neutral-500 hover:text-red-400 border border-neutral-900 hover:border-red-950/50 transition cursor-pointer text-center leading-tight">
                                                 <span>🗑️ Request Destruction | درخواست تخریب پست</span>
                                                 <span className="text-[8px] font-normal text-neutral-600 mt-0.5">(Needs 1000 clicks in 2h)</span>

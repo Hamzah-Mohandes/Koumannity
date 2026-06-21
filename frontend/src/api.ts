@@ -1,8 +1,7 @@
-import type { LeaderboardRow, PostCreate, PostResponse } from "./types";
+import type { LeaderboardRow, PostResponse } from "./types";
 
 import axios from "axios";
 
-// آدرس بک‌آند FastAPI
 const API_BASE_URL = "http://localhost:8000";
 
 const api = axios.create({
@@ -10,37 +9,39 @@ const api = axios.create({
 });
 
 export const apiService = {
-    // دریافت همه پست‌ها از بک‌آند
+    // دریافت همه پست‌ها
     getPosts: async (): Promise<PostResponse[]> => {
         const response = await api.get("/posts");
         return response.data;
     },
 
-    // ارسال یک پست جدید
-    createPost: async (postData: PostCreate): Promise<PostResponse> => {
-        const response = await api.post("/posts", postData);
+    // ارسال پست جدید با فرم‌دیتا
+    createPost: async (formData: FormData): Promise<PostResponse> => {
+        const response = await api.post("/posts", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
         return response.data;
     },
 
-    // ثبت ری‌اکشن روی پست‌ها (هماهنگ با پارامتر type بک‌آند)
-    reactToPost: async (postId: number, type: "toxic" | "cool"): Promise<PostResponse> => {
-        const response = await api.post(`/posts/${postId}/react?type=${type}`);
+    // ثبت ری‌آکشن انحصاری همراه با فرستادن یوزرنیم کاربر فعلی
+    reactToPost: async (
+        postId: number,
+        username: string,
+        type: "toxic" | "cool",
+    ): Promise<PostResponse> => {
+        const response = await api.post(`/posts/${postId}/react?username=${username}&type=${type}`);
         return response.data;
     },
 
-    // فعال‌سازی پروتکل تخریب ۲ ساعته در جنگ بین ۳ گروه
-    triggerDestruction: async (postId: number): Promise<{ status: string; post: PostResponse }> => {
-        const response = await api.post(`/posts/${postId}/trigger-destruction`);
-        return response.data;
-    },
-
-    // حذف کامل و سخت یک پست توسط ادمین از دیتابیس
+    // حذف سخت توسط ادمین
     adminHardDelete: async (postId: number): Promise<{ status: string }> => {
         const response = await api.delete(`/admin/posts/${postId}`);
         return response.data;
     },
 
-    // دریافت جدول امتیازات تیم‌ها
+    // دریافت وضعیت لیدربورد
     getLeaderboard: async (): Promise<LeaderboardRow[]> => {
         const response = await api.get("/leaderboard");
         return response.data;
