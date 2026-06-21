@@ -11,10 +11,10 @@ const AVATARS: { id: AvatarType; name: string; emoji: string }[] = [
     { id: 'mia_gamer', name: 'Mia Gamer', emoji: '🎮' },
 ];
 
-const TEAMS: { id: TeamType; name: string; color: string }[] = [
-    { id: 'kourosh', name: 'Team Kourosh', color: 'bg-red-600 hover:bg-red-700' },
-    { id: 'iman', name: 'Team Iman', color: 'bg-blue-600 hover:bg-blue-700' },
-    { id: 'mialand', name: 'Mialand', color: 'bg-purple-600 hover:bg-purple-700' },
+const TEAMS: { id: TeamType; name: string; color: string; ringColor: string }[] = [
+    { id: 'kourosh', name: 'Team Kourosh', color: 'bg-red-700 hover:bg-red-600', ringColor: 'ring-red-500' },
+    { id: 'iman', name: 'Team Iman', color: 'bg-blue-700 hover:bg-blue-600', ringColor: 'ring-blue-500' },
+    { id: 'mialand', name: 'Mialand', color: 'bg-purple-700 hover:bg-purple-600', ringColor: 'ring-purple-500' },
 ];
 
 export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
@@ -27,6 +27,13 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
         if (username.trim() && selectedAvatar && selectedTeam) {
             onComplete(username.trim(), selectedAvatar, selectedTeam);
         }
+    };
+
+    const getActiveTeamColor = () => {
+        if (selectedTeam === 'kourosh') return 'bg-red-600 hover:bg-red-500 text-white';
+        if (selectedTeam === 'iman') return 'bg-blue-600 hover:bg-blue-500 text-white';
+        if (selectedTeam === 'mialand') return 'bg-purple-600 hover:bg-purple-500 text-white';
+        return 'bg-slate-800 text-gray-600';
     };
 
     return (
@@ -77,7 +84,7 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
                                     key={team.id}
                                     type="button"
                                     onClick={() => setSelectedTeam(team.id)}
-                                    className={`w-full p-3 rounded-xl font-semibold text-left transition flex justify-between items-center cursor-pointer ${team.color} ${selectedTeam === team.id ? 'ring-4 ring-yellow-500' : ''
+                                    className={`w-full p-3 rounded-xl font-semibold text-left transition flex justify-between items-center cursor-pointer ${team.color} ${selectedTeam === team.id ? `ring-4 ${team.ringColor}` : ''
                                         }`}
                                 >
                                     <span>{team.name}</span>
@@ -87,11 +94,11 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
                         </div>
                     </div>
 
-                    {/* Submit Button */}
+                    {/* Submit Button (رنگش داینامیک بر اساس تیم انتخابی عوض میشه) */}
                     <button
                         type="submit"
                         disabled={!username.trim() || !selectedAvatar || !selectedTeam}
-                        className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-slate-800 disabled:text-gray-600 text-black font-bold p-3.5 rounded-xl transition shadow-lg cursor-pointer disabled:cursor-not-allowed"
+                        className={`w-full font-bold p-3.5 rounded-xl transition shadow-lg cursor-pointer disabled:cursor-not-allowed ${getActiveTeamColor()}`}
                     >
                         Enter Koumannity
                     </button>
