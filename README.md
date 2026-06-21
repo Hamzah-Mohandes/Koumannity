@@ -47,3 +47,25 @@ Koumannity/
     │   │   └── Timeline.tsx # Core UI view for Koumannity Timeline
     │   ├── api.ts           # Axios central API config
     │   └── types.ts         # TypeScript definitions
+
+
+
+
+-----------------------------
+cd backend
+# Activate your virtual environment (.venv)
+source ../.venv/bin/activate  # On macOS/Linux
+# ..\.venv\Scripts\activate  # On Windows
+
+# Install required packages
+pip install fastapi uvicorn pydantic python-multipart
+
+# Run the live server
+uvicorn app.main:app --reload
+The API will be live at: http://localhost:8000
+-------------------------------
+Frontend Setup
+cd frontend
+npm install
+npm run dev
+http://localhost:5173)
