@@ -22,12 +22,21 @@ export const apiService = {
         return response.data;
     },
 
-    // ثبت ری‌اکشن روی پست‌ها
-    reactToPost: async (
-        postId: number,
-        reactionType: "toxic" | "cool" | "cheap",
-    ): Promise<PostResponse> => {
-        const response = await api.post(`/posts/${postId}/react?reaction_type=${reactionType}`);
+    // ثبت ری‌اکشن روی پست‌ها (هماهنگ با پارامتر type بک‌آند)
+    reactToPost: async (postId: number, type: "toxic" | "cool"): Promise<PostResponse> => {
+        const response = await api.post(`/posts/${postId}/react?type=${type}`);
+        return response.data;
+    },
+
+    // فعال‌سازی پروتکل تخریب ۲ ساعته در جنگ بین ۳ گروه
+    triggerDestruction: async (postId: number): Promise<{ status: string; post: PostResponse }> => {
+        const response = await api.post(`/posts/${postId}/trigger-destruction`);
+        return response.data;
+    },
+
+    // حذف کامل و سخت یک پست توسط ادمین از دیتابیس
+    adminHardDelete: async (postId: number): Promise<{ status: string }> => {
+        const response = await api.delete(`/admin/posts/${postId}`);
         return response.data;
     },
 

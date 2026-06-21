@@ -16,6 +16,8 @@ export default function Timeline({ user }: TimelineProps) {
     const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
     const [textContent, setTextContent] = useState('');
     const [imageUrl, setImageUrl] = useState('');
+    const [showImageInput, setShowImageInput] = useState(false);
+    const [activeFilter, setActiveFilter] = useState<TeamType | null>(null);
     const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
@@ -39,25 +41,27 @@ export default function Timeline({ user }: TimelineProps) {
 
     const handleCreatePost = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!textContent.trim() || textContent.length > 100) return;
+        if (!textContent.trim() && !imageUrl.trim()) return;
+        if (textContent.length > 100) return;
 
         try {
             await apiService.createPost({
                 username: user.username,
                 avatar: user.avatar,
                 team: user.team,
-                text_content: textContent,
-                image_url: imageUrl || undefined,
+                text_content: textContent.trim() || null,
+                image_url: imageUrl.trim() || null,
             });
             setTextContent('');
             setImageUrl('');
+            setShowImageInput(false);
             fetchData();
         } catch (error) {
             console.error('Failed to create post:', error);
         }
     };
 
-    const handleReaction = async (postId: number, type: 'toxic' | 'cool' | 'cheap') => {
+    const handleReaction = async (postId: number, type: 'toxic' | 'cool') => {
         try {
             await apiService.reactToPost(postId, type);
             fetchData();
@@ -66,61 +70,101 @@ export default function Timeline({ user }: TimelineProps) {
         }
     };
 
-    // اطلاعات فکشن‌ها بر اساس تصویر 1000152503.png
-    const getFactionDetails = (team: TeamType) => {
-        switch (team) {
-            case 'kourosh':
-                return { name: "KING'S COURT", sub: "(Kourosh)", color: 'text-amber-500', border: 'border-amber-500', bg: 'bg-amber-500/10', bar: 'bg-amber-500', icon: '👑' };
-            case 'iman':
-                return { name: "JUDGMENT CALL", sub: "(Iman)", color: 'text-blue-500', border: 'border-blue-500', bg: 'bg-blue-500/10', bar: 'bg-blue-500', icon: '⚖️' };
-            case 'mialand':
-                return { name: "FANTASY REALM", sub: "(Mia)", color: 'text-purple-500', border: 'border-purple-500', bg: 'bg-purple-500/10', bar: 'bg-purple-500', icon: '🦄' };
+    // اخطار حماسی جدید برای فرآیند حذف ۲ ساعته با ۱۰۰۰ کلیک
+    const handleDeletePost = async (postId: number) => {
+        if (!window.confirm('If this post gets 1000 clicks, it will be deleted within the next 2 hours in the war between the 3 factions! | اگر این پست ۱۰۰۰ بار کلیک بخورد، تا ۲ ساعت آینده در جنگ بین ۳ گروه پاک خواهد شد!')) return;
+        try {
+            // شبیه‌سازی منطق در فرانت‌اند
+            alert('Termination protocol activated! 1000 clicks required within 2h. | پروتکل حذف فعال شد! نیاز به ۱۰۰۰ کلیک در ۲ ساعت آینده.');
+        } catch (error) {
+            console.error('Failed to delete post:', error);
         }
     };
 
+    const getFactionStats = (team: TeamType) => {
+        const factionPosts = posts.filter(p => p.team === team);
+        const totalCool = factionPosts.reduce((sum, p) => sum + (p.cool_count || 0), 0);
+        const totalToxic = factionPosts.reduce((sum, p) => sum + (p.toxic_count || 0), 0);
+        return { totalCool, totalToxic };
+    };
+
+    const getFactionDetails = (team: TeamType) => {
+        switch (team) {
+            case 'kourosh':
+                return { name: "KING'S COURT", sub: "(Kourosh)", color: 'text-amber-500', border: 'border-amber-500/80', bar: 'bg-amber-500', icon: '👑', activeBtn: 'bg-amber-500 text-black', label: '👑 Kourosh | کوروش' };
+            case 'iman':
+                return { name: "JUDGMENT CALL", sub: "(Iman)", color: 'text-blue-500', border: 'border-blue-500/80', bar: 'bg-blue-500', icon: '⚖️', activeBtn: 'bg-blue-500 text-white', label: '⚖️ Iman Abad | ایمان آباد' };
+            case 'mialand':
+                return { name: "FANTASY REALM", sub: "(Mia)", color: 'text-purple-500', border: 'border-purple-500/80', bar: 'bg-purple-500', icon: '🦄', activeBtn: 'bg-purple-500 text-white', label: '🦄 Miya Land | میا لند' };
+        }
+    };
+
+    const filteredPosts = activeFilter ? posts.filter(p => p.team === activeFilter) : posts;
+    const getScore = (team: TeamType) => leaderboard.find(l => l.team === team)?.score || 1000;
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-amber-500 font-bold font-sans">
-                Loading Koumanto Matrix...
+            <div className="min-h-screen bg-[#0d0e12] flex items-center justify-center text-amber-500 font-bold">
+                Loading Koumanto Matrix... | در حال بارگذاری ماتریکس کوماتو...
             </div>
         );
     }
 
-    // پیدا کردن امتیاز برای پروگرس‌بار لیدربرد
-    const getScore = (team: TeamType) => leaderboard.find(l => l.team === team)?.score || 1000;
-
     return (
-        <div className="min-h-screen bg-[#0d0e12] text-white p-4 md:p-8 font-sans">
+        <div className="min-h-screen bg-[#0d0e12] text-white p-4 md:p-8 font-sans antialiased select-none">
 
-            {/* هدر بالایی بر اساس دیزاین مانیتور */}
-            <div className="max-w-5xl mx-auto flex justify-between items-center mb-8 border-b border-neutral-900 pb-4">
-                <div className="flex items-center space-x-2">
+            {/* هدر بالایی برنامه */}
+            <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 border-b border-neutral-900 pb-5 gap-4">
+                <div className="flex items-center space-x-2 shrink-0">
                     <span className="text-xl font-extrabold tracking-wider bg-gradient-to-r from-amber-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">k/mi</span>
                     <span className="text-lg font-bold text-gray-200">Koumanto</span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-sm shadow-md">
+
+                {/* فیلترها */}
+                <div className="flex flex-wrap gap-2 bg-[#15171e] p-1.5 rounded-full border border-neutral-800/80 justify-center items-center shadow-inner">
+                    <button onClick={() => setActiveFilter(null)} className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 cursor-pointer ${!activeFilter ? 'bg-white/80 text-black shadow' : 'text-gray-400 hover:text-white'}`}>
+                        🌐 All Timeline | کل تایم‌لاین
+                    </button>
+                    {(['kourosh', 'iman', 'mialand'] as TeamType[]).map(t => (
+                        <button key={t} onClick={() => setActiveFilter(t)} className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 cursor-pointer ${activeFilter === t ? getFactionDetails(t).activeBtn : `${getFactionDetails(t).color} hover:bg-neutral-800/40`}`}>
+                            {getFactionDetails(t).label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-sm shadow border border-neutral-700 hidden md:flex shrink-0">
                     {user.avatar === 'kourosh_matrix' ? '😎' : user.avatar === 'iman_serious' ? '😐' : '🎮'}
                 </div>
             </div>
 
             <div className="max-w-5xl mx-auto space-y-8">
 
-                {/* ۱. بخش Team Leaderboard افقی تصویر 1000152503.png */}
+                {/* ۱. جدول امتیازات پیشرفته */}
                 <div className="space-y-4">
-                    <h2 className="text-lg font-bold text-gray-300">Team Leaderboard</h2>
+                    <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Team Leaderboard | جدول امتیازات</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {(['kourosh', 'iman', 'mialand'] as TeamType[]).map((t) => {
                             const fac = getFactionDetails(t);
                             const score = getScore(t);
+                            const stats = getFactionStats(t);
                             return (
-                                <div key={t} className="bg-[#15171e] border border-neutral-800/60 p-4 rounded-xl space-y-2">
+                                <div key={t} className="bg-[#15171e] border border-neutral-800/60 p-4 rounded-xl space-y-3 shadow-sm">
                                     <div className="flex justify-between items-center text-xs font-bold">
                                         <span className={fac.color}>{fac.icon} {fac.name}</span>
-                                        <span className="text-gray-400 font-mono">{score.toLocaleString()} points</span>
+                                        <span className="text-gray-400 font-mono text-[10px]">{score.toLocaleString()} PTS</span>
                                     </div>
-                                    {/* پروگرس بار داینامیک */}
-                                    <div className="w-full h-2.5 bg-neutral-900 rounded-full overflow-hidden">
-                                        <div className={`h-full ${fac.bar}`} style={{ width: `${Math.min((score / 2000) * 100, 100)}%` }}></div>
+
+                                    <div className="w-full h-1.5 bg-neutral-950 rounded-full overflow-hidden border border-neutral-900">
+                                        <div className={`h-full ${fac.bar} transition-all duration-500`} style={{ width: `${Math.min((score / 2000) * 100, 100)}%` }}></div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center text-[10px] font-semibold bg-neutral-950/40 p-1.5 rounded-lg border border-neutral-900">
+                                        <span className="text-blue-400 flex items-center gap-1">
+                                            🔥 {stats.totalCool} Khafan | خفن
+                                        </span>
+                                        <span className="text-amber-500 flex items-center gap-1">
+                                            ☣️ {stats.totalToxic} Semic | سمی
+                                        </span>
                                     </div>
                                 </div>
                             );
@@ -128,94 +172,78 @@ export default function Timeline({ user }: TimelineProps) {
                     </div>
                 </div>
 
-                {/* ۲. بخش باکس باکس ارسال پست Share a Moment */}
-                <div className="bg-[#15171e] border border-neutral-800/80 p-5 rounded-2xl shadow-lg space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-bold text-gray-300">Share a Moment <span className="text-xs text-gray-500 font-normal">(Expires 24h)</span></h3>
-                    </div>
-
-                    <form onSubmit={handleCreatePost} className="space-y-4">
+                {/* ۲. باکس ارسال پست با تغییر انقضا به ۱۰ ساعت */}
+                <div className="bg-[#15171e] border border-neutral-800/80 p-5 rounded-2xl shadow-lg space-y-3">
+                    <h3 className="text-sm font-bold text-gray-300">Share a Moment | به اشتراک گذاشتن لحظه <span className="text-xs text-neutral-500 font-normal">(Expires 10h)</span></h3>
+                    <form onSubmit={handleCreatePost} className="space-y-3">
                         <div className="flex items-center bg-[#0d0e12] border border-neutral-800 rounded-xl px-4 py-3 focus-within:border-neutral-700 transition">
                             <textarea
                                 value={textContent}
                                 onChange={(e) => setTextContent(e.target.value)}
                                 maxLength={100}
-                                placeholder="Tell the Commandoes something crazy... (max 100 chars)"
-                                className="w-full bg-transparent text-sm placeholder-neutral-600 focus:outline-none resize-none h-10 pt-1"
+                                placeholder="Tell the Commandoes something crazy... | چیزی دیوانه‌وار به کماندوها بگو..."
+                                className="w-full bg-transparent text-sm placeholder-neutral-600 focus:outline-none resize-none h-8 pt-1"
                             />
-                            <button type="submit" className="bg-[#ccced6] hover:bg-white text-black font-extrabold px-6 py-2 rounded-xl text-xs tracking-wider transition ml-2 shrink-0">
-                                SHARE
-                            </button>
+                            <button type="button" onClick={() => setShowImageInput(!showImageInput)} className="p-2 rounded-lg text-gray-500 hover:text-white transition mr-2 cursor-pointer">🖼️</button>
+                            <button type="submit" className="bg-[#ccced6] hover:bg-white text-black font-extrabold px-6 py-2 rounded-xl text-[11px] transition shrink-0 cursor-pointer">SHARE | ارسال</button>
                         </div>
 
-                        {/* ردیف انتخاب برای نمایش نوع آواتار تیمی شما */}
-                        <div className="flex items-center space-x-6 text-xs">
-                            <span className="text-gray-500 font-semibold">Post As Team</span>
-                            <div className="flex items-center space-x-1.5 border border-amber-500/40 px-3 py-1.5 rounded-full bg-amber-500/5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                                <span className="font-bold text-amber-500">{getFactionDetails(user.team).name}</span>
-                                <span className="text-gray-500 text-[10px]">{getFactionDetails(user.team).sub}</span>
-                            </div>
-                        </div>
+                        {showImageInput && (
+                            <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Paste Image URL here..." className="w-full bg-[#0d0e12] border border-neutral-800 rounded-xl p-2.5 text-xs text-neutral-300 focus:outline-none" />
+                        )}
                     </form>
                 </div>
 
                 {/* ۳. بخش Live Timeline */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-gray-300">Live Timeline</h3>
+                    <h3 className="text-base font-bold text-gray-400 uppercase tracking-wider">
+                        {!activeFilter ? 'Live Timeline | تایم‌لاین زنده' : `${getFactionDetails(activeFilter).name} Timeline`}
+                    </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {posts.length === 0 ? (
-                            <p className="text-neutral-600 text-sm py-4 col-span-full text-center">No active moments in the matrix...</p>
+                        {filteredPosts.length === 0 ? (
+                            <p className="text-neutral-600 text-sm py-12 col-span-full text-center">No active moments...</p>
                         ) : (
-                            posts.map((post) => {
+                            filteredPosts.map((post) => {
                                 const fac = getFactionDetails(post.team);
                                 return (
                                     <div key={post.id} className={`bg-[#15171e] rounded-2xl border-2 ${fac.border} p-5 flex flex-col justify-between shadow-md space-y-4`}>
-
                                         <div className="space-y-3">
-                                            {/* هدر کارت شامل دکمه ساعت و آیکون فکشن */}
                                             <div className="flex justify-between items-center text-xs">
                                                 <span className="text-lg">{fac.icon}</span>
-                                                <span className="text-neutral-500 flex items-center space-x-1">
-                                                    <span>🕒</span> <span>24h</span>
-                                                </span>
+                                                {/* لیبل زمانی تغییر یافته به 10h */}
+                                                <span className="text-neutral-500 font-mono text-[10px]">🕒 10h</span>
                                             </div>
-
-                                            {/* متن اصلی پست */}
                                             <div>
                                                 <h4 className="font-bold text-sm text-white mb-1">
                                                     {post.username}'s Post: <span className="font-normal text-neutral-300">{post.text_content}</span>
                                                 </h4>
-                                                <span className={`text-xs font-bold ${fac.color}`}>#{post.team === 'kourosh' ? 'GoldStandard' : post.team === 'iman' ? 'Logic' : 'Gaming'}</span>
                                             </div>
-
-                                            {/* نمایش تصویر انتخابی */}
                                             {post.image_url && (
-                                                <div className="pt-2">
-                                                    <img src={post.image_url} alt="Faction moment" className="w-full h-32 object-cover rounded-xl border border-neutral-800" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                                <div className="pt-1 overflow-hidden rounded-xl">
+                                                    <img src={post.image_url} alt="Faction moment" className="w-full h-36 object-cover border border-neutral-900" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* دکمه‌های ری‌آکشن دقیقاً مثل عکس */}
-                                        <div className="grid grid-cols-3 gap-1.5 pt-3 border-t border-neutral-800/60 text-[10px]">
-                                            <button onClick={() => handleReaction(post.id, 'toxic')} className="flex flex-col items-center justify-center bg-[#0d0e12] hover:bg-neutral-900 p-2 rounded-xl border border-neutral-800 transition text-amber-500/90 cursor-pointer">
-                                                <span className="font-bold">☣️ Semic</span>
-                                                <span className="text-neutral-500 font-mono mt-0.5">({post.toxic_count})</span>
-                                            </button>
+                                        <div className="space-y-2.5 pt-3 border-t border-neutral-800/60 ">
+                                            <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                                                <button onClick={() => handleReaction(post.id, 'toxic')} className="flex flex-col items-center justify-center bg-[#0d0e12] p-2 rounded-xl border border-neutral-800 text-amber-500/90 cursor-pointer">
+                                                    <span className="font-bold">☣️ Semic | سَمی</span>
+                                                    <span className="text-neutral-500 mt-0.5">({post.toxic_count})</span>
+                                                </button>
+                                                <button onClick={() => handleReaction(post.id, 'cool')} className="flex flex-col items-center justify-center bg-[#0d0e12] p-2 rounded-xl border border-neutral-800 text-blue-400 cursor-pointer">
+                                                    <span className="font-bold">🔥 Khafan | خَفَن</span>
+                                                    <span className="text-neutral-500 mt-0.5">({post.cool_count})</span>
+                                                </button>
+                                            </div>
 
-                                            <button onClick={() => handleReaction(post.id, 'cool')} className="flex flex-col items-center justify-center bg-[#0d0e12] hover:bg-neutral-900 p-2 rounded-xl border border-neutral-800 transition text-blue-400 cursor-pointer">
-                                                <span className="font-bold">🔥 Khafan</span>
-                                                <span className="text-neutral-500 font-mono mt-0.5">({post.cool_count})</span>
-                                            </button>
-
-                                            <button onClick={() => handleReaction(post.id, 'cheap')} className="flex flex-col items-center justify-center bg-[#0d0e12] hover:bg-neutral-900 p-2 rounded-xl border border-neutral-800 transition text-purple-400 cursor-pointer">
-                                                <span className="font-bold">💰 Cheap/Ex</span>
-                                                <span className="text-neutral-500 font-mono mt-0.5">({post.cheap_count})</span>
+                                            {/* دکمه حذف با استراتژی و قوانین ۲ ساعته جدید شما */}
+                                            <button onClick={() => handleDeletePost(post.id)} className="w-full flex flex-col items-center justify-center bg-neutral-950 px-3 py-2 rounded-xl text-[9px] font-bold text-neutral-500 hover:text-red-400 border border-neutral-900 hover:border-red-950/50 transition cursor-pointer text-center leading-tight">
+                                                <span>🗑️ Request Destruction | درخواست تخریب پست</span>
+                                                <span className="text-[8px] font-normal text-neutral-600 mt-0.5">(Needs 1000 clicks in 2h)</span>
                                             </button>
                                         </div>
-
                                     </div>
                                 );
                             })
