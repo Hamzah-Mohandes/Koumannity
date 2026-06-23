@@ -1,73 +1,38 @@
-import type { AvatarType, TeamType } from './types';
-import React, { useState } from 'react';
+import { Link, Route, BrowserRouter as Router, Routes } from "react-router-dom";
 
-import AdminPanel from './views/AdminPanel';
-import ProfileSetup from './views/ProfileSetup';
-import Timeline from './views/Timeline';
+import AdminPanel from "./views/AdminPanel";
+import Timeline from "./views/Timeline";
 
 function App() {
-  const [user, setUser] = useState<{ username: string; avatar: AvatarType; team: TeamType } | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-
-  // تابع بررسی رمز ورود به پنل ادمین
-  const handleAdminAccess = () => {
-    const password = prompt('ENTER MATRIX OVERLORD KEY | رمز عبور ادمین را وارد کنید:');
-    // رمز عبور را اینجا می‌توانید تغییر دهید (مثلاً گذاشتیم: admin123)
-    if (password === 'admin123') {
-      setIsAdmin(true);
-    } else {
-      alert('ACCESS DENIED | دسترسی رد شد!');
-    }
-  };
-
-  const handleProfileComplete = (profileData: { username: string; avatar: AvatarType; team: TeamType }) => {
-    setUser(profileData);
-  };
-
-  // اگر رمز ادمین درست بود، پنل ادمین را نشان بده
-  if (isAdmin) {
-    return (
-      <div className="relative">
-        {/* دکمه بازگشت از پنل ادمین به تایم‌لاین */}
-        <button
-          onClick={() => setIsAdmin(false)}
-          className="fixed bottom-4 right-4 z-50 bg-white text-black font-black text-xs px-4 py-2 rounded-xl shadow-xl hover:bg-neutral-200 cursor-pointer"
-        >
-          ⬅️ Exit Admin | خروج از ادمین
-        </button>
-        <AdminPanel />
-      </div>
-    );
-  }
-
-  // اگر هنوز یوزر مشخص نشده، فرم پروفایل رو نشون بده
-  if (!user) {
-    return (
-      <div className="relative min-h-screen bg-[#0d0e12]">
-        <ProfileSetup onComplete={handleProfileComplete} />
-        {/* دکمه مخفی ادمین در گوشه پایین سمت چپ */}
-        <button
-          onClick={handleAdminAccess}
-          className="absolute bottom-4 left-4 text-[10px] text-neutral-800 hover:text-red-800 font-mono transition cursor-pointer"
-        >
-          [matrix_core]
-        </button>
-      </div>
-    );
-  }
-
-  // اگر لاگین موفق بود، کل تایم‌لاین لایو رو لود کن
   return (
-    <div className="relative">
-      <Timeline user={user} />
-      {/* دکمه مخفی ادمین در صفحه تایم‌لاین */}
-      <button
-        onClick={handleAdminAccess}
-        className="fixed bottom-4 left-4 z-50 text-[10px] text-neutral-800 hover:text-red-800 font-mono transition cursor-pointer"
-      >
-        [matrix_core]
-      </button>
-    </div>
+    <Router>
+      <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans">
+        {/* Navigation Bar */}
+        <nav className="border-b border-neutral-800 bg-neutral-900/50 backdrop-blur-md sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <Link to="/" className="text-xl font-black tracking-wider text-emerald-400 hover:text-emerald-300 transition-colors">
+              KOUMANNITY <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">MATRIX</span>
+            </Link>
+            <div className="flex items-center gap-4">
+              <Link to="/" className="text-sm font-medium hover:text-emerald-400 transition-colors">
+                Timeline
+              </Link>
+              <Link to="/admin" className="text-sm font-medium text-neutral-400 hover:text-red-400 transition-colors border-l border-neutral-800 pl-4">
+                Admin
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        {/* Main Content Container */}
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/" element={<Timeline />} />
+            <Route path="/admin" element={<AdminPanel />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
