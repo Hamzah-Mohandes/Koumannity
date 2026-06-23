@@ -52,7 +52,6 @@ class LeaderboardRow(BaseModel):
 
 posts_db: List[PostResponse] = []
 
-# Alle Teams starten exakt mit 1000 Punkten
 leaderboard_db: List[LeaderboardRow] = [
     LeaderboardRow(team=TeamEnum.KOUROSH, score=1000),
     LeaderboardRow(team=TeamEnum.IMAN, score=1000),
