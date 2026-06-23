@@ -9,7 +9,7 @@ from datetime import datetime
 
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, relationship
 
 # 1. DATABASE CONFIGURATION
 DATABASE_URL = "postgresql://postgres:Koumannity2026!@db.mcyrddwxjlmzkucsezfo.supabase.co:5432/postgres"
@@ -18,33 +18,54 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# 2. SQLALCHEMY MODELS
+# 2. SQLALCHEMY MODELS (Database Tables with Cascade Delete)
 class DBPost(Base):
     __tablename__ = "posts"
+    
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, index=True)
     avatar = Column(String)
     team = Column(String)
     text_content = Column(String, nullable=True)
-    image_url = Column(String, nullable=True) # رشته بیس۶۴ عکس یا آدرس وب
+    image_url = Column(String, nullable=True)  # Hält den Base64-String des Bildes
     created_at = Column(DateTime, default=datetime.utcnow)
     toxic_count = Column(Integer, default=0)
     cool_count = Column(Integer, default=0)
     is_destruction_active = Column(Boolean, default=False)
+    
+    # Kaskadierendes Löschen auf Python-Ebene aktivieren
+    reactions = relationship("DBReaction", back_populates="post", cascade="all, delete-orphan", passive_deletes=True)
 
 class DBReaction(Base):
     __tablename__ = "reactions"
+    
     id = Column(Integer, primary_key=True, index=True)
+    # ondelete="CASCADE" sorgt für das Löschen auf Datenbank-Ebene (Supabase)
     post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"))
     username = Column(String, index=True)
-    reaction_type = Column(String)
+    reaction_type = Column(String)  # "toxic" oder "cool"
+    
+    post = relationship("DBPost", back_populates="reactions")
 
 class DBLeaderboard(Base):
     __tablename__ = "leaderboard"
+    
     team = Column(String, primary_key=True)
     score = Column(Integer, default=1000)
 
+# Tabellen in Supabase erstellen
 Base.metadata.create_all(bind=engine)
+
+# Initialisiere das Leaderboard, falls es leer ist
+db = SessionLocal()
+if db.query(DBLeaderboard).count() == 0:
+    db.add_all([
+        DBLeaderboard(team="kourosh", score=1000),
+        DBLeaderboard(team="iman", score=1000),
+        DBLeaderboard(team="mialand", score=1000)
+    ])
+    db.commit()
+db.close()
 
 # 3. FASTAPI SETUP
 app = FastAPI(title="Koumannity Faction Matrix API")
@@ -57,6 +78,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Abhängigkeit für die DB-Session
 def get_db():
     db = SessionLocal()
     try:
@@ -64,6 +86,7 @@ def get_db():
     finally:
         db.close()
 
+# Enums & Pydantic Schemas
 class TeamEnum(str, Enum):
     KOUROSH = "kourosh"
     IMAN = "iman"
@@ -85,12 +108,14 @@ class PostResponse(BaseModel):
     toxic_count: int
     cool_count: int
     is_destruction_active: bool
+    
     class Config:
         from_attributes = True
 
 class LeaderboardRow(BaseModel):
     team: TeamEnum
     score: int
+    
     class Config:
         from_attributes = True
 
@@ -109,7 +134,7 @@ async def create_post(
     if file:
         try:
             file_content = await file.read()
-            # تبدیل عکس به فرمت متنی استاندارد برای ذخیره ابدی در دیتابیس بدون نیاز به هارد یا فایل خارجی
+            # Konvertiert das Bild in einen Base64-String für die dauerhafte Speicherung in Supabase
             encoded = base64.b64encode(file_content).decode("utf-8")
             saved_image_url = f"data:{file.content_type};base64,{encoded}"
         except Exception as e:
@@ -138,7 +163,10 @@ async def react_to_post(post_id: int, username: str, type: str, db: Session = De
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    existing_reaction = db.query(DBReaction).filter(DBReaction.post_id == post_id, DBReaction.username == username).first()
+    existing_reaction = db.query(DBReaction).filter(
+        DBReaction.post_id == post_id, 
+        DBReaction.username == username
+    ).first()
 
     if existing_reaction:
         if existing_reaction.reaction_type == type:
@@ -156,6 +184,7 @@ async def react_to_post(post_id: int, username: str, type: str, db: Session = De
     else:
         if type == "toxic": post.toxic_count += 1
         elif type == "cool": post.cool_count += 1
+        
         new_reaction = DBReaction(post_id=post_id, username=username, reaction_type=type)
         db.add(new_reaction)
 
@@ -172,7 +201,8 @@ def admin_hard_delete_post(post_id: int, db: Session = Depends(get_db)):
     post = db.query(DBPost).filter(DBPost.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    db.query(DBReaction).filter(DBReaction.post_id == post_id).delete()
+        
+    # Durch 'cascade="all, delete-orphan"' werden die Reaktionen jetzt automatisch mitgelöscht!
     db.delete(post)
     db.commit()
-    return {"status": "hard_deleted_by_admin"}
+    return {"status": "hard_deleted_by_admin_with_cascade"}
