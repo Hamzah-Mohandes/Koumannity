@@ -137,7 +137,9 @@ async def create_post(
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        saved_image_url = f"http://localhost:8000/uploads/{filename}"
+        # حل مشکل آدرس عکس روی سرور کلود رندر یا سیستم لوکال
+        RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")
+        saved_image_url = f"{RENDER_EXTERNAL_URL}/uploads/{filename}"
 
     db_post = DBPost(
         username=username,
