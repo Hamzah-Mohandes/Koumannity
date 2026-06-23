@@ -1,5 +1,6 @@
 import type { AvatarType, TeamType } from '../types';
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 
 interface ProfileSetupProps {
     onComplete: (data: { username: string; avatar: AvatarType; team: TeamType }) => void;
@@ -21,20 +22,22 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
             setError('Max 15 characters allowed! | حداکثر ۱۵ کاراکتر مجاز است!');
             return;
         }
+
+        // بک‌آپ برای هویت ادمین مخفی
         onComplete({ username: username.trim(), avatar, team });
     };
 
     return (
-        <div className="min-h-screen bg-[#0d0e12] text-white flex items-center justify-center p-4 md:p-8 font-sans antialiased select-none">
-            <div className="max-w-md w-full bg-[#15171e] border border-neutral-800/80 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+        <div className="min-h-screen bg-[#121214] text-white flex items-center justify-center p-4 md:p-8 font-sans antialiased select-none">
+            <div className="max-w-md w-full bg-[#1a1a1e] border border-neutral-800/80 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
 
                 {/* هدر باکس تنظیمات */}
                 <div className="text-center space-y-2">
-                    <h1 className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-amber-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-black tracking-wider bg-gradient-to-r from-amber-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
                         INITIALIZE MATRIX
                     </h1>
-                    <p className="text-xs text-gray-400 font-medium">
-                        Setup your identity in Koumanto | هویت خود را در کوماتو بسازید
+                    <p className="text-xs text-neutral-400 font-bold uppercase tracking-tight">
+                        Setup your identity in Koumannity
                     </p>
                 </div>
 
@@ -53,7 +56,7 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
                                 setError('');
                             }}
                             placeholder="e.g. Commando_007"
-                            className="w-full bg-[#0d0e12] border border-neutral-800 focus:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none transition placeholder-neutral-600 text-neutral-200"
+                            className="w-full bg-[#26262b] border border-neutral-700 focus:border-neutral-500 rounded-xl px-4 py-3 text-base focus:outline-none transition placeholder-neutral-600 text-neutral-200 font-medium"
                         />
                         {error && <p className="text-red-500 text-[11px] font-semibold">{error}</p>}
                     </div>
@@ -75,9 +78,9 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
                                     key={av.id}
                                     type="button"
                                     onClick={() => setAvatar(av.id)}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all cursor-pointer bg-[#0d0e12] ${avatar === av.id
-                                            ? 'border-neutral-400 bg-neutral-900/40 shadow-md'
-                                            : 'border-neutral-800 hover:border-neutral-700'
+                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all cursor-pointer bg-[#26262b] ${avatar === av.id
+                                        ? 'border-neutral-400 bg-neutral-700/40 shadow-md'
+                                        : 'border-neutral-800 hover:border-neutral-600'
                                         }`}
                                 >
                                     <span className="text-2xl mb-1">{av.icon}</span>
@@ -95,18 +98,18 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
                         <div className="space-y-2">
                             {(
                                 [
-                                    { id: 'kourosh', icon: '👑', name: 'Kourosh', fa: 'کوروش', color: 'border-amber-500 text-amber-500 bg-amber-500/5' },
-                                    { id: 'iman', icon: '⚖️', name: 'Iman Abad', fa: 'ایمان آباد', color: 'border-blue-500 text-blue-500 bg-blue-500/5' },
-                                    { id: 'mialand', icon: '🦄', name: 'Miya Land', fa: 'میا لند', color: 'border-purple-500 text-purple-500 bg-purple-500/5' },
+                                    { id: 'kourosh', icon: '👑', name: "KING'S COURT", fa: 'کوروش', color: 'border-amber-500 text-amber-500 bg-amber-500/5' },
+                                    { id: 'iman', icon: '⚖️', name: 'JUDGMENT CALL', fa: 'ایمان آباد', color: 'border-blue-500 text-blue-500 bg-blue-500/5' },
+                                    { id: 'mialand', icon: '🦄', name: 'FANTASY REALM', fa: 'میا لند', color: 'border-purple-500 text-purple-500 bg-purple-500/5' },
                                 ] as { id: TeamType; icon: string; name: string; fa: string; color: string }[]
                             ).map((t) => (
                                 <button
                                     key={t.id}
                                     type="button"
                                     onClick={() => setTeam(t.id)}
-                                    className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200 text-left text-xs font-bold cursor-pointer bg-[#0d0e12] ${team === t.id
-                                            ? `${t.color} border-2 shadow-md`
-                                            : 'border-neutral-800 text-gray-400 hover:border-neutral-700 hover:text-white'
+                                    className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200 text-left text-xs font-bold cursor-pointer bg-[#26262b] ${team === t.id
+                                        ? `${t.color} border-2 shadow-md`
+                                        : 'border-neutral-800 text-gray-400 hover:border-neutral-600 hover:text-white'
                                         }`}
                                 >
                                     <div className="flex items-center space-x-2.5">
@@ -122,7 +125,7 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
                     {/* دکمه تایید نهایی */}
                     <button
                         type="submit"
-                        className="w-full bg-[#ccced6] hover:bg-white text-black font-black py-3 rounded-xl text-xs tracking-widest transition duration-200 uppercase cursor-pointer shadow-lg mt-2"
+                        className="w-full bg-neutral-200 hover:bg-white text-black font-black py-3.5 rounded-xl text-xs tracking-widest transition duration-200 uppercase cursor-pointer shadow-lg mt-2"
                     >
                         Enter Matrix | ورود به ماتریکس ⚡
                     </button>

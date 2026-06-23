@@ -1,33 +1,60 @@
+import type { AvatarType, TeamType } from "./types";
 import { Link, Route, BrowserRouter as Router, Routes } from "react-router-dom";
 
 import AdminPanel from "./views/AdminPanel";
+import ProfileSetup from "./views/ProfileSetup"; // آدرس به پوشه views اصلاح شد
 import Timeline from "./views/Timeline";
+import { useState } from "react";
 
 function App() {
+  // ذخیره اطلاعات کاربر پس از تایید هویت اولیه
+  const [userSession, setUserSession] = useState<{
+    username: string;
+    avatar: AvatarType;
+    team: TeamType;
+  } | null>(null);
+
+  // اگر هنوز کاربر مشخصات خود را وارد نکرده، گیت ورودی را نشان بده
+  if (!userSession) {
+    return (
+      <ProfileSetup
+        onComplete={(data) => {
+          setUserSession(data);
+        }}
+      />
+    );
+  }
+
   return (
     <Router>
-      <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans">
+      <div className="min-h-screen bg-[#121214] text-neutral-100 font-sans antialiased">
         {/* Navigation Bar */}
-        <nav className="border-b border-neutral-800 bg-neutral-900/50 backdrop-blur-md sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <Link to="/" className="text-xl font-black tracking-wider text-emerald-400 hover:text-emerald-300 transition-colors">
-              KOUMANNITY <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">MATRIX</span>
+        <nav className="bg-[#1a1a1e] border-b border-neutral-800 sticky top-0 z-50 shadow-md">
+          <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            {/* Logo */}
+            <Link to="/" className="text-2xl md:text-3xl font-extrabold tracking-tight text-white hover:opacity-90 transition-opacity">
+              Koumannity
             </Link>
+
+            {/* نشان دادن اطلاعات اپراتور لاگین شده در هدر */}
             <div className="flex items-center gap-4">
-              <Link to="/" className="text-sm font-medium hover:text-emerald-400 transition-colors">
+              <span className="text-sm font-semibold text-neutral-300">
                 Timeline
-              </Link>
-              <Link to="/admin" className="text-sm font-medium text-neutral-400 hover:text-red-400 transition-colors border-l border-neutral-800 pl-4">
-                Admin
-              </Link>
+              </span>
+              <div className="flex items-center gap-2 bg-[#26262b] border border-neutral-700 px-3 py-1.5 rounded-full text-xs font-bold text-neutral-200">
+                <span>👤 {userSession.username}</span>
+                <span className="opacity-60 uppercase">({userSession.team})</span>
+              </div>
             </div>
           </div>
         </nav>
 
-        {/* Main Content Container */}
-        <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Main Interface Wrapper */}
+        <main className="max-w-7xl mx-auto px-4 md:px-6 py-10">
           <Routes>
-            <Route path="/" element={<Timeline />} />
+            {/* پاس دادن اطلاعات کاربر فعال به تایم‌لاین */}
+            <Route path="/" element={<Timeline currentUser={userSession} />} />
+            {/* مسیر ادمین کاملاً مخفی است و فقط با زدن آدرس دستی /admin باز می‌شود */}
             <Route path="/admin" element={<AdminPanel />} />
           </Routes>
         </main>
