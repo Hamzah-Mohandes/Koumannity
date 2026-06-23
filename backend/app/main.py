@@ -70,10 +70,13 @@ async def create_post(
 ):
     saved_image_url = None
     if file:
-        file_location = f"{UPLOAD_DIR}/{datetime.utcnow().timestamp()}_{file.filename}"
+        filename = f"{datetime.utcnow().timestamp()}_{file.filename}"
+        file_location = os.path.join(UPLOAD_DIR, filename)
+        
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        saved_image_url = f"http://localhost:8000/{file_location}"
+            
+        saved_image_url = f"http://localhost:8000/uploads/{filename}"
 
     new_id = len(posts_db) + 1
     new_post = PostResponse(
