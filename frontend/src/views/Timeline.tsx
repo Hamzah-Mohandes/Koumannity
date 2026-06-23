@@ -13,7 +13,6 @@ interface TimelineProps {
 
 export default function Timeline({ currentUser }: TimelineProps) {
     const [posts, setPosts] = useState<PostResponse[]>([]);
-    // _leaderboard gesetzt um Fehler TS6133 zu beheben
     const [_leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -73,6 +72,22 @@ export default function Timeline({ currentUser }: TimelineProps) {
             await fetchMatrixData();
         } catch (error) {
             console.error("Reaction failed:", error);
+        }
+    };
+
+    // متد حذف مستقیم برای یوزر ادمین
+    const handleAdminDelete = async (id: number) => {
+        if (!window.confirm("Are you sure you want to terminate this transmission?")) return;
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || "https://koumannity.onrender.com";
+            const res = await fetch(`${API_URL}/admin/posts/${id}`, {
+                method: "DELETE"
+            });
+            if (res.ok) {
+                await fetchMatrixData();
+            }
+        } catch (error) {
+            console.error("Admin action failed:", error);
         }
     };
 
@@ -205,7 +220,16 @@ export default function Timeline({ currentUser }: TimelineProps) {
                                         {post.team === "kourosh" ? "King's Court" : post.team === "iman" ? "Judgment" : "Fantasy"}
                                     </span>
                                 </div>
-                                <span className="text-xs text-neutral-500 font-bold flex items-center gap-1">⏱️ 6h Left</span>
+
+                                <div className="flex items-center gap-3">
+                                    {/* نمایش دکمه حذف فیزیکی فقط برای یوزر ادمین ماتریکس */}
+                                    {currentUser.username.toLowerCase() === "admin" && (
+                                        <button onClick={() => handleAdminDelete(post.id)} className="text-[10px] bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-2 py-1 rounded font-black uppercase tracking-wider transition-all border border-red-500/30">
+                                            🗑️ Terminate
+                                        </button>
+                                    )}
+                                    <span className="text-xs text-neutral-500 font-bold flex items-center gap-1">⏱️ 6h Left</span>
+                                </div>
                             </div>
 
                             <div className="space-y-4 my-4">
