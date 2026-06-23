@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+@keyframes waveMotion {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.matrix-wave-bg {
+    /* ترکیب مستقیم نورهای نئونی بسیار درخشان و روشن با پس‌زمینه */
+    background: linear-gradient(-45deg, #121214, #d97706, #2563eb, #7c3aed, #121214);
+    background-size: 240% 240%;
+    animation: waveMotion 10s ease infinite; /* حرکت سریع، پرانرژی و روان */
+}
