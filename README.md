@@ -8,27 +8,27 @@ Koumannity is a dynamic, real-time web application where three different faction
 
 ## 🚀 Tech Stack | تکنولوژی‌های مورد استفاده
 
-### Backend (بک‌آند)
-* **FastAPI (Python 3.14+)** - High-performance asynchronous API framework.
-* **Uvicorn** - Lightning-fast ASGI server implementation.
-* **Pydantic v2** - Data validation and settings management.
-* **Multipart Support** - Efficient file and image handling.
+### Backend
 
-### Frontend (فرانت‌آند)
-* **React (TypeScript)** - Component-based UI with strict type safety.
-* **Tailwind CSS** - Modern utility-first styling for dark-mode matrix design.
-* **Axios** - Promised-based HTTP client for seamless API communication.
+- **FastAPI (Python)** - High-performance asynchronous API framework.
+- **Uvicorn** - Lightning-fast ASGI server implementation.
+- **Pydantic v2** - Data validation and settings management.
+- **Multipart Support** - Efficient file and image handling.
+
+### Frontend
+
+- **React (TypeScript)** - Component-based UI with strict type safety.
+- **Tailwind CSS** - Modern utility-first styling for dark-mode matrix design.
 
 ---
 
 ## ⚡ Features | ویژگی‌های کلیدی
 
-* **Faction Selection:** Join *King's Court (Kourosh)*, *Judgment Call (Iman)*, or *Fantasy Realm (Mia)*.
-* **Real-time Timeline:** Feed filters to isolate faction activities or view the global matrix.
-* **Exclusive Reactions:** Atomic `Toxic` ☣️ and `Cool` 🔥 toggles (One reaction per user; clicking again removes it).
-* **Image Uploads:** Direct local storage processing from user devices via multipart forms.
-* **Balanced Starting Point:** All factions start with an equal baseline of `1,000 PTS`.
-* **Termination Protocol:** "Request Destruction" feature for intense tactical post removal.
+- **Faction Selection:** Join _King's Court (Kourosh)_, _Judgment Call (Iman)_, or _Fantasy Realm (Mia)_.
+- **Real-time Timeline:** Feed filters to isolate faction activities or view the global matrix.
+- **Exclusive Reactions:** Atomic `Toxic` ☣️ and `Cool` 🔥 toggles (One reaction per user; clicking again removes it).
+- **Image Uploads:** Direct local storage processing from user devices via multipart forms.
+- **Balanced Starting Point:** All factions start with an equal baseline of `1,000 PTS`.
 
 ---
 
@@ -45,27 +45,22 @@ Koumannity/
     ├── src/
     │   ├── views/
     │   │   └── Timeline.tsx # Core UI view for Koumannity Timeline
-    │   ├── api.ts           # Axios central API config
+    │   ├── api.ts           # Central API configuration
     │   └── types.ts         # TypeScript definitions
+```
 
+1. Backend Setup
+   cd backend
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn app.main:app --reload
+2. Frontend Setup
+   cd frontend
+   npm install
+   npm run dev
 
+🌐 Deployment | دپلوی
+Backend: Hosted on Render
 
-
------------------------------
-cd backend
-# Activate your virtual environment (.venv)
-source ../.venv/bin/activate  # On macOS/Linux
-# ..\.venv\Scripts\activate  # On Windows
-
-# Install required packages
-pip install fastapi uvicorn pydantic python-multipart
-
-# Run the live server
-uvicorn app.main:app --reload
-The API will be live at: http://localhost:8000
--------------------------------
-Frontend Setup
-cd frontend
-npm install
-npm run dev
-http://localhost:5173)
+Frontend: Hosted on Vercel
