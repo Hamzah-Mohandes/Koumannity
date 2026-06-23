@@ -1,20 +1,18 @@
 import os
+import base64
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
 from enum import Enum
 from datetime import datetime
-import requests
 
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
-# 1. DATABASE & STORAGE CONFIGURATION
+# 1. DATABASE CONFIGURATION
 DATABASE_URL = "postgresql://postgres:Koumannity2026!@db.mcyrddwxjlmzkucsezfo.supabase.co:5432/postgres"
-SUPABASE_PROJECT_ID = "mcyrddwxjlmzkucsezfo"
-BUCKET_NAME = "koumannity-images"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -28,7 +26,7 @@ class DBPost(Base):
     avatar = Column(String)
     team = Column(String)
     text_content = Column(String, nullable=True)
-    image_url = Column(String, nullable=True)
+    image_url = Column(String, nullable=True) # رشته بیس۶۴ عکس یا آدرس وب
     created_at = Column(DateTime, default=datetime.utcnow)
     toxic_count = Column(Integer, default=0)
     cool_count = Column(Integer, default=0)
@@ -109,20 +107,13 @@ async def create_post(
     saved_image_url = None
     
     if file:
-        filename = f"{datetime.utcnow().timestamp()}_{file.filename}"
-        # آپلود مستقیم به استوریج رایگان سوپابیس بدون نیاز به هارد رندر
-        supabase_upload_url = f"https://{SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/{BUCKET_NAME}/{filename}"
-        
         try:
             file_content = await file.read()
-            # ارسال فایل به صورت مستقیم با ریکوئست بدون احراز هویت پیچیده برای باکت‌های عمومی
-            upload_response = requests.post(
-                f"https://{SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/{BUCKET_NAME}/{filename}",
-                files={"file": (filename, file_content, file.content_type)}
-            )
-            saved_image_url = supabase_upload_url
+            # تبدیل عکس به فرمت متنی استاندارد برای ذخیره ابدی در دیتابیس بدون نیاز به هارد یا فایل خارجی
+            encoded = base64.b64encode(file_content).decode("utf-8")
+            saved_image_url = f"data:{file.content_type};base64,{encoded}"
         except Exception as e:
-            print(f"Storage upload bypass failed: {e}")
+            print(f"Base64 encoding failed: {e}")
             saved_image_url = None
 
     db_post = DBPost(
