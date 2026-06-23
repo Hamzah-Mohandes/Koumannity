@@ -2,7 +2,8 @@ import type { LeaderboardRow, PostResponse } from "./types";
 
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8000";
+// استفاده از متغیر محیطی در محیط کلود و بازگشت به لوکال‌‌هاست در محیط توسعه
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const api = axios.create({
     baseURL: API_BASE_URL,
